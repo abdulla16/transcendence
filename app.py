@@ -1,39 +1,49 @@
-from flask import Flask, request, redirect, url_for, render_template, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['ALLOWED_EXTENSIONS'] = {'html'}
-app.secret_key = 'supersecretkey'
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+def test(text):
+    print(f"The '{text}' is echoing from the test function")
+    return f"The '{text}' is echoing from the test function"
 
 @app.route('/')
-def upload_form():
+def index():
     return render_template('upload.html')
+
+@app.route('/chat')
+def chat():
+    return render_template('chat.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        flash('No file part')
         return redirect(request.url)
     file = request.files['file']
     if file.filename == '':
-        flash('No selected file')
         return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filename = file.filename
+    if file:
+        filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        flash('File successfully uploaded')
-        return redirect(url_for('upload_form'))
-    else:
-        flash('Allowed file types are HTML')
-        return redirect(request.url)
+        return redirect(url_for('chat'))
 
-if __name__ == "__main__":
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    user_message = request.form.get('message', '')
+    if user_message:
+        response_text = test(user_message)  # Call the test function
+        response = {
+            'user': user_message,
+            'assistant': response_text
+        }
+        return jsonify(response)
+    return jsonify({'error': 'No message received'}), 400
+
+if __name__ == '__main__':
     app.run(debug=True)

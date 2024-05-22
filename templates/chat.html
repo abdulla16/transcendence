@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Chat Interface</h1>
+    <div id="chatContainer">
+        <div id="chatMessages"></div>
+        <div id="chatBox">
+            <input type="text" id="chatInput" placeholder="Type your message here...">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+    <script>
+        function addMessage(author, text, role) {
+            var messageContainer = document.createElement('div');
+            messageContainer.classList.add('message', role);
+
+            var authorElement = document.createElement('span');
+            authorElement.classList.add('author');
+            authorElement.textContent = author + ':';
+
+            var textElement = document.createElement('span');
+            textElement.classList.add('text');
+            textElement.textContent = text;
+
+            messageContainer.appendChild(authorElement);
+            messageContainer.appendChild(textElement);
+
+            document.getElementById('chatMessages').appendChild(messageContainer);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        document.getElementById('sendButton').addEventListener('click', function() {
+            var input = document.getElementById('chatInput');
+            if (input.value.trim() !== '') {
+                addMessage('User', input.value, 'user');
+                // Send message to backend
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({message: input.value})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.assistant) {
+                        addMessage('Assistant', data.assistant, 'assistant');
+                    }
+                });
+                input.value = '';
+            }
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                var input = event.target;
+                if (input.value.trim() !== '') {
+                    addMessage('User', input.value, 'user');
+                    // Send message to backend
+                    fetch('/send_message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({message: input.value})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.assistant) {
+                            addMessage('Assistant', data.assistant, 'assistant');
+                        }
+                    });
+                    input.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
