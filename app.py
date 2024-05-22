@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 import os
 from werkzeug.utils import secure_filename
+#realy good
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
