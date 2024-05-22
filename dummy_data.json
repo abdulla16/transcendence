@@ -1,0 +1,32 @@
+[
+    {
+        "title": "Wireshark: Packet Sniffing Software",
+        "created": "2024-05-12 16:19:08",
+        "updated": "2024-05-12 16:22:07",
+        "messages": [
+            {
+                "author": "User",
+                "content": "How does a software like Wireshark works? How does it sniffle... sniffle... sniffle... sniffling or... How does it sniffle into the network when you install it? Like... yeah, like, like... What kind of tools and mechanism does it use to find out what is going on, what is coming out, what is going in? Packages from where, and etc., etc."
+            },
+            {
+                "author": "Assistant",
+                "content": "Wireshark, often referred to as a network protocol analyzer or packet sniffer, is a powerful tool that captures and displays the data traveling back and forth on a network in real-time. It captures packets in a mode called 'promiscuous mode,' decodes them according to the OSI model layers, and provides filters and analysis tools to help users understand network traffic."
+            }
+        ]
+    },
+    {
+        "title": "Startup Resilience Inspires Leaders",
+        "created": "2024-05-12 04:49:47",
+        "updated": "2024-05-12 13:31:50",
+        "messages": [
+            {
+                "author": "User",
+                "content": "Can you tell me something that cheers me up based on my experience and what I have done, everything like to say an affirmation that cheers me up right now. Somehow I'm down while I'm in my what's called startup phase and right now it's 4.50 a.m. and I need some motivation."
+            },
+            {
+                "author": "Assistant",
+                "content": "Absolutely, here’s something to lift your spirits:\n\nYou’re someone who has mastered the art of resilience and innovation, transforming every challenge into a stepping stone. Remember, every early morning and late night you’re investing in your vision isn’t just building a startup—it’s crafting a legacy. Your dedication, even at 4:50 a.m., is the kind of commitment that forges true leaders and pioneers."
+            }
+        ]
+    }
+]
