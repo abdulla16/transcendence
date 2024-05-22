@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload HTML/JSON File</title>
+    <title>Upload HTML File and Chat Interface</title>
     <style>
         body {
             margin: 20px;
@@ -39,11 +39,58 @@
         #uploadStatus {
             margin-top: 10px;
         }
+        #modeStatus {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #chatContainer {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #chatMessages {
+            flex-grow: 1;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        #chatBox {
+            display: flex;
+            gap: 10px;
+        }
+        #chatInput {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #sendButton {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .message {
+            margin: 10px 0;
+            display: flex;
+        }
+        .message .author {
+            font-weight: bold;
+        }
+        .message.user .author {
+            color: blue;
+        }
+        .message.assistant .author {
+            color: green;
+        }
+        .message .text {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Upload HTML/JSON File</h1>
-    <form id="uploadForm" method="post" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+    <h1>Upload HTML File</h1>
+    <form id="uploadForm" method="post" action="/upload" enctype="multipart/form-data">
         <input type="file" name="file" accept=".html,.json">
         <input type="submit" value="Upload">
     </form>
@@ -52,6 +99,14 @@
             <div id="progressBarFill">0%</div>
         </div>
         <div id="uploadStatus"></div>
+    </div>
+    <div id="modeStatus">Checking feature flag...</div>
+    <div id="chatContainer" style="display: none;">
+        <div id="chatMessages"></div>
+        <div id="chatBox">
+            <input type="text" id="chatInput" placeholder="Type your message here...">
+            <button id="sendButton">Send</button>
+        </div>
     </div>
     <script>
         document.getElementById('uploadForm').addEventListener('submit', function(event) {
@@ -73,10 +128,96 @@
 
             xhr.addEventListener('load', function() {
                 document.getElementById('uploadStatus').textContent = 'Upload has been finished';
-                window.location.href = "{{ url_for('chat') }}";
+                var jsonResponse = JSON.parse(xhr.responseText);
+                if (jsonResponse.status === "success") {
+                    document.getElementById('chatContainer').style.display = 'flex';
+                    checkFeatureFlag();
+                }
             });
 
             xhr.send(formData);
+        });
+
+        function addMessage(author, text, role) {
+            var messageContainer = document.createElement('div');
+            messageContainer.classList.add('message', role);
+
+            var authorElement = document.createElement('span');
+            authorElement.classList.add('author');
+            authorElement.textContent = author + ':';
+
+            var textElement = document.createElement('span');
+            textElement.classList.add('text');
+            textElement.textContent = text;
+
+            messageContainer.appendChild(authorElement);
+            messageContainer.appendChild(textElement);
+
+            document.getElementById('chatMessages').appendChild(messageContainer);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        document.getElementById('sendButton').addEventListener('click', function() {
+            var input = document.getElementById('chatInput');
+            if (input.value.trim() !== '') {
+                var userInput = input.value;
+                addMessage('User', userInput, 'user');
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userInput })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage('Assistant', data.response, 'assistant');
+                });
+                input.value = '';
+            }
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                var input = event.target;
+                if (input.value.trim() !== '') {
+                    var userInput = input.value;
+                    addMessage('User', userInput, 'user');
+                    fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: userInput })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        addMessage('Assistant', data.response, 'assistant');
+                    });
+                    input.value = '';
+                }
+            }
+        });
+
+        function checkFeatureFlag() {
+            fetch('/check_flag')
+            .then(response => response.json())
+            .then(data => {
+                var modeStatus = document.getElementById('modeStatus');
+                if (data.feature_enabled) {
+                    modeStatus.textContent = 'You are in Paid Mode';
+                    modeStatus.style.color = 'green';
+                } else {
+                    modeStatus.textContent = 'You are in Unpaid Mode';
+                    modeStatus.style.color = 'red';
+                }
+            });
+        }
+
+        // Check the feature flag status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkFeatureFlag();
         });
     </script>
 </body>
