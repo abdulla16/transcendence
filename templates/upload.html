@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload HTML File and Chat Interface</title>
+    <style>
+        body {
+            margin: 20px;
+            font-family: sans-serif;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #uploadForm {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #progressBarContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        #progressBar {
+            width: 100%;
+            height: 20px;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        #progressBarFill {
+            width: 0;
+            height: 100%;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+        #uploadStatus {
+            margin-top: 10px;
+        }
+        #chatContainer {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #chatMessages {
+            flex-grow: 1;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        #chatBox {
+            display: flex;
+            gap: 10px;
+        }
+        #chatInput {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #sendButton {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .message {
+            margin: 10px 0;
+            display: flex;
+        }
+        .message .author {
+            font-weight: bold;
+        }
+        .message.user .author {
+            color: blue;
+        }
+        .message.assistant .author {
+            color: green;
+        }
+        .message .text {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload HTML File</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <form id="uploadForm" method="post" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".html">
+        <input type="submit" value="Upload">
+    </form>
+    <div id="progressBarContainer">
+        <div id="progressBar">
+            <div id="progressBarFill">0%</div>
+        </div>
+        <div id="uploadStatus"></div>
+    </div>
+    <div id="chatContainer">
+        <div id="chatMessages"></div>
+        <div id="chatBox">
+            <input type="text" id="chatInput" placeholder="Type your message here...">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var form = event.target;
+            var formData = new FormData(form);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', form.action, true);
+
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    var percentComplete = (e.loaded / e.total) * 100;
+                    document.getElementById('progressBarContainer').style.display = 'block';
+                    document.getElementById('progressBarFill').style.width = percentComplete + '%';
+                    document.getElementById('progressBarFill').textContent = Math.round(percentComplete) + '%';
+                }
+            });
+
+            xhr.addEventListener('load', function() {
+                document.getElementById('uploadStatus').textContent = 'Upload has been finished';
+                document.getElementById('chatContainer').style.display = 'flex';
+            });
+
+            xhr.send(formData);
+        });
+
+        function addMessage(author, text, role) {
+            var messageContainer = document.createElement('div');
+            messageContainer.classList.add('message', role);
+
+            var authorElement = document.createElement('span');
+            authorElement.classList.add('author');
+            authorElement.textContent = author + ':';
+
+            var textElement = document.createElement('span');
+            textElement.classList.add('text');
+            textElement.textContent = text;
+
+            messageContainer.appendChild(authorElement);
+            messageContainer.appendChild(textElement);
+
+            document.getElementById('chatMessages').appendChild(messageContainer);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        document.getElementById('sendButton').addEventListener('click', function() {
+            var input = document.getElementById('chatInput');
+            if (input.value.trim() !== '') {
+                addMessage('User', input.value, 'user');
+                // Simulate assistant response after 1 second
+                setTimeout(function() {
+                    addMessage('Assistant', input.value, 'assistant');
+                }, 1000);
+                input.value = '';
+            }
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                var input = event.target;
+                if (input.value.trim() !== '') {
+                    addMessage('User', input.value, 'user');
+                    // Simulate assistant response after 1 second
+                    setTimeout(function() {
+                        addMessage('Assistant', input.value, 'assistant');
+                    }, 1000);
+                    input.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
